@@ -1,0 +1,245 @@
+<title>Mascota Balam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono&display=swap">
+<style>
+/* Una sola mirada: noche de bosque húmedo con acentos neón, igual que el juego */
+:root {
+  --bg: #04130F; --panel: #0A2219; --line: #1C4A3C; --ink: #E9FFF7; --muted: #8FC9B6;
+  --jade: #3FE0D0; --gold: #FFC93C; --magenta: #FF3D9A;
+  --display: "Press Start 2P", "Courier New", monospace;
+  --body: "Space Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 48px; }
+h1 { font-family: var(--display); font-size: clamp(18px, 3vw, 28px); color: var(--gold); margin: 0 0 10px; text-wrap: balance; }
+.lead { color: var(--muted); max-width: 64ch; margin: 0 0 28px; line-height: 1.6; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.card { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card canvas { width: 100%; max-width: 100%; aspect-ratio: 1; background: radial-gradient(circle at 50% 40%, #12392F, #04130F 70%); border-radius: 10px; }
+.tag { font-family: var(--display); font-size: 10px; letter-spacing: 0.08em; color: var(--jade); }
+.card h2 { font-family: var(--display); font-size: 14px; margin: 0; color: var(--ink); }
+.card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
+.moods { display: flex; gap: 8px; flex-wrap: wrap; }
+.moods button { font-family: var(--display); font-size: 9px; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.moods button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.moods button:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+  <h1>Mascota Balam · 3 propuestas</h1>
+  <p class="lead">Las tres conservan los ojos dorados de la pantalla de inicio. Cada una tiene tres estados que el juego usaría: normal, celebrando un combo y triste tras un fallo. Prueba los botones.</p>
+  <div class="grid">
+    <article class="card">
+      <span class="tag">A · ARCADE</span>
+      <h2>Balam Pixel</h2>
+      <canvas id="c0" width="360" height="360" aria-label="Jaguar en pixel art"></canvas>
+      <p>Cabeza de jaguar en pixel art con contorno neón. Encaja con la letra retro y el quetzal pixelado.</p>
+      <div class="moods" data-for="0"></div>
+    </article>
+    <article class="card">
+      <span class="tag">B · MAYA</span>
+      <h2>Balam Glifo</h2>
+      <canvas id="c1" width="360" height="360" aria-label="Jaguar estilo glifo maya"></canvas>
+      <p>Rostro tallado como una estela maya: orejas escalonadas, banda con numerales y colmillos. Es la más ceremonial e imponente.</p>
+      <div class="moods" data-for="1"></div>
+    </article>
+    <article class="card">
+      <span class="tag">C · AMIGABLE</span>
+      <h2>Balam Cachorro</h2>
+      <canvas id="c2" width="360" height="360" aria-label="Jaguar cachorro estilo chibi"></canvas>
+      <p>Cachorro de cuerpo entero que baila al ritmo y reacciona a cada jugada. Es la más cercana para estudiantes y la que más personalidad muestra.</p>
+      <div class="moods" data-for="2"></div>
+    </article>
+  </div>
+</div>
+
+<script>
+const GOLD = '#FFC93C', JADE = '#3FE0D0', MAG = '#FF3D9A', NIGHT = '#0B0620';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Ojos de Balam (los mismos del juego) ----------
+function glow(g, x, y, r, color, a) {
+  const grd = g.createRadialGradient(x, y, 0, x, y, r);
+  grd.addColorStop(0, color); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.save(); g.globalAlpha = a; g.globalCompositeOperation = 'lighter';
+  g.fillStyle = grd; g.fillRect(x - r, y - r, r * 2, r * 2); g.restore();
+}
+function eyes(g, cx, cy, spread, w, t, mood, tilt = 0.18) {
+  const blink = (t % 4.2) > 4.0 ? 0.1 : 1;
+  const squint = mood === 'feliz' ? 0.45 : mood === 'triste' ? 0.7 : 1;
+  for (const side of [-1, 1]) {
+    const x = cx + side * spread;
+    glow(g, x, cy, w * 2.2, GOLD, 0.45);
+    g.save(); g.translate(x, cy);
+    g.rotate(side * (mood === 'triste' ? tilt * 1.8 : -tilt));
+    g.scale(1, blink * squint);
+    g.fillStyle = GOLD; g.beginPath(); g.ellipse(0, 0, w, w * 0.44, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = NIGHT; g.beginPath(); g.ellipse(side * w * 0.05, 0, w * 0.15, w * 0.4, 0, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+}
+
+// ---------- A · Balam Pixel ----------
+const HALF = [
+  '..OO........', '.OYYO.......', '.OYPYO.OOOOO', '.OYYYOOYYYYY', '..OYYYYYSYYY',
+  '..OYSYYYYYSY', '.OYYYYYYYYYY', '.OYSYEEEEYYY', 'OYYYEEEEEEYY', 'OYSYYEEEEYYY',
+  'OYYYYYYYYYLL', 'OYYSYYYYYLLL', 'OYYYYYYYLLLP', 'OYSYYYYLLLLP', '.OYYYYYLLLOO',
+  '.OYYSYYLLOLL', '..OYYYYYLLLL', '...OYYYYYLLL', '....OOYYYYYY', '......OOOOOO',
+];
+const PIX = { O: '#1A0D05', Y: '#E8A33A', L: '#F6D9A0', S: '#3A1C0A', P: '#FF5C8A', E: '#120806' };
+function pixelJaguar(g, t, mood) {
+  const px = 12, cols = 24, rows = HALF.length;
+  const bob = reduce ? 0 : Math.round(Math.sin(t * 4) * (mood === 'feliz' ? 2 : 1)) * 3;
+  const ox = 180 - (cols * px) / 2, oy = 70 + bob + (mood === 'triste' ? 10 : 0);
+  // contorno neón
+  g.save(); g.shadowColor = JADE; g.shadowBlur = 18;
+  g.fillStyle = JADE;
+  g.fillRect(ox - 4, oy + 3 * px, cols * px + 8, (rows - 4) * px);
+  g.restore();
+  for (let r = 0; r < rows; r++) {
+    const row = HALF[r] + [...HALF[r]].reverse().join('');
+    for (let c = 0; c < cols; c++) {
+      const col = PIX[row[c]];
+      if (!col) continue;
+      g.fillStyle = col; g.fillRect(ox + c * px, oy + r * px, px, px);
+    }
+  }
+  // boca según el ánimo
+  g.fillStyle = PIX.O;
+  if (mood === 'feliz') { g.fillRect(ox + 9 * px, oy + 15 * px, 6 * px, px); g.fillStyle = MAG; g.fillRect(ox + 10 * px, oy + 16 * px, 4 * px, px); }
+  if (mood === 'triste') { g.fillRect(ox + 10 * px, oy + 16 * px, 4 * px, px); }
+  eyes(g, ox + 12 * px, oy + 8.5 * px, 5.5 * px, 2.3 * px, t, mood);
+  if (mood === 'feliz') sparkles(g, t, 180, 60);
+}
+
+// ---------- B · Balam Glifo ----------
+function glyphJaguar(g, t, mood) {
+  const bob = reduce ? 0 : Math.sin(t * 2) * 3;
+  g.save(); g.translate(180, 186 + bob);
+  const stone = '#2E2A3D', stone2 = '#4A4560';
+  g.lineJoin = 'round';
+  // orejas escalonadas
+  for (const s of [-1, 1]) {
+    g.beginPath();
+    g.moveTo(s * 70, -110); g.lineTo(s * 70, -150); g.lineTo(s * 95, -150); g.lineTo(s * 95, -130);
+    g.lineTo(s * 120, -130); g.lineTo(s * 120, -80); g.closePath();
+    g.fillStyle = stone; g.fill(); g.strokeStyle = JADE; g.lineWidth = 4; g.stroke();
+    g.fillStyle = MAG; g.fillRect(s > 0 ? 88 : -102, -138, 14, 8);
+  }
+  // cabeza (bloque tallado)
+  const head = new Path2D();
+  head.moveTo(-120, -110); head.lineTo(120, -110); head.lineTo(130, 20); head.lineTo(90, 110);
+  head.lineTo(-90, 110); head.lineTo(-130, 20); head.closePath();
+  g.fillStyle = stone; g.fill(head);
+  g.save(); g.shadowColor = JADE; g.shadowBlur = 16; g.strokeStyle = JADE; g.lineWidth = 5; g.stroke(head); g.restore();
+  // banda con numerales mayas 1..4 (los carriles)
+  g.fillStyle = stone2; g.fillRect(-110, -102, 220, 34);
+  for (let i = 0; i < 4; i++) {
+    const x = -84 + i * 56;
+    g.fillStyle = GOLD;
+    for (let d = 0; d <= i; d++) { g.beginPath(); g.arc(x - i * 5 + d * 10, -90, 3.5, 0, 7); g.fill(); }
+    g.fillRect(x - 14, -80, 28, 4);
+  }
+  // rosetas en mejillas
+  for (const [x, y] of [[-95, -20], [95, -20], [-80, 40], [80, 40], [-105, 15], [105, 15]]) {
+    g.strokeStyle = GOLD; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 9, 0.3, 5.6); g.stroke();
+    g.fillStyle = GOLD; g.beginPath(); g.arc(x, y, 2.5, 0, 7); g.fill();
+  }
+  // marcos de los ojos
+  for (const s of [-1, 1]) { g.strokeStyle = stone2; g.lineWidth = 8; g.strokeRect(s * 50 - 38, -56, 76, 46); }
+  eyes(g, 0, -33, 50, 30, t, mood, 0.12);
+  // hocico, nariz y colmillos
+  g.fillStyle = stone2;
+  g.beginPath(); g.moveTo(-50, 10); g.lineTo(50, 10); g.lineTo(40, 70); g.lineTo(-40, 70); g.closePath(); g.fill();
+  g.fillStyle = MAG; g.beginPath(); g.moveTo(-18, 14); g.lineTo(18, 14); g.lineTo(0, 32); g.closePath(); g.fill();
+  const open = mood === 'feliz' ? 14 : mood === 'triste' ? -4 : 4;
+  g.fillStyle = NIGHT; g.fillRect(-36, 52, 72, 10 + open);
+  g.fillStyle = '#FFF7F0';
+  for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 30, 52); g.lineTo(s * 20, 52); g.lineTo(s * 25, 70 + open * 0.5); g.closePath(); g.fill(); }
+  g.restore();
+  if (mood === 'feliz') sparkles(g, t, 180, 50);
+}
+
+// ---------- C · Balam Cachorro ----------
+function cubJaguar(g, t, mood) {
+  const beat = reduce ? 0 : Math.sin(t * Math.PI * 2 * (mood === 'feliz' ? 2.2 : 1.4));
+  const bob = beat * (mood === 'triste' ? 1 : 6);
+  const fur = '#F2AE45', light = '#FFE9C2', spot = '#4A2410';
+  g.save(); g.translate(180, 196);
+  // cola
+  g.strokeStyle = fur; g.lineWidth = 16; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(40, 110); g.quadraticCurveTo(110, 100 + beat * 20, 100, 40 + beat * 15); g.stroke();
+  g.strokeStyle = spot; g.lineWidth = 16; g.beginPath(); g.moveTo(101, 50 + beat * 15); g.lineTo(100, 40 + beat * 15); g.stroke();
+  // cuerpo
+  g.fillStyle = fur; g.beginPath(); g.ellipse(0, 105 + bob * 0.3, 62, 52, 0, 0, 7); g.fill();
+  g.fillStyle = light; g.beginPath(); g.ellipse(0, 115 + bob * 0.3, 36, 36, 0, 0, 7); g.fill();
+  // brazos: arriba al celebrar, abajo si está triste
+  for (const s of [-1, 1]) {
+    const up = mood === 'feliz' ? -70 + beat * 8 : mood === 'triste' ? 30 : -10 + beat * 6;
+    g.strokeStyle = fur; g.lineWidth = 20;
+    g.beginPath(); g.moveTo(s * 45, 85 + bob * 0.3); g.lineTo(s * 72, 85 + up); g.stroke();
+    g.fillStyle = light; g.beginPath(); g.arc(s * 72, 85 + up, 12, 0, 7); g.fill();
+  }
+  g.translate(0, bob - (mood === 'triste' ? -12 : 0));
+  // orejas
+  for (const s of [-1, 1]) {
+    g.fillStyle = fur; g.beginPath(); g.arc(s * 70, -78, 28, 0, 7); g.fill();
+    g.fillStyle = spot; g.beginPath(); g.arc(s * 70, -78, 15, 0, 7); g.fill();
+  }
+  // cabeza
+  g.save(); g.shadowColor = MAG; g.shadowBlur = 22;
+  g.fillStyle = fur; g.beginPath(); g.ellipse(0, -15, 108, 92, 0, 0, 7); g.fill(); g.restore();
+  // rosetas
+  for (const [x, y, r] of [[-60, -70, 9], [-2, -88, 8], [52, -72, 9], [-88, -20, 7], [88, -22, 7], [-30, -64, 5], [26, -60, 5]]) {
+    g.strokeStyle = spot; g.lineWidth = 4; g.beginPath(); g.arc(x, y, r, 0.4, 5.4); g.stroke();
+  }
+  // hocico
+  g.fillStyle = light; g.beginPath(); g.ellipse(0, 32, 56, 40, 0, 0, 7); g.fill();
+  g.fillStyle = MAG; g.beginPath(); g.moveTo(-12, 12); g.lineTo(12, 12); g.lineTo(0, 26); g.closePath(); g.fill();
+  g.strokeStyle = spot; g.lineWidth = 3; g.beginPath();
+  if (mood === 'triste') { g.arc(0, 52, 12, Math.PI * 1.15, Math.PI * 1.85); }
+  else { g.moveTo(0, 26); g.lineTo(0, 34); g.arc(-9, 34, 9, 0, Math.PI * (mood === 'feliz' ? 1 : 0.8)); g.moveTo(18, 34); g.arc(9, 34, 9, 0, Math.PI * (mood === 'feliz' ? 1 : 0.8)); }
+  g.stroke();
+  if (mood === 'feliz') { g.fillStyle = MAG; g.beginPath(); g.ellipse(0, 46, 9, 7, 0, 0, Math.PI); g.fill(); }
+  // mejillas
+  g.fillStyle = 'rgba(255,61,154,0.35)';
+  for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 72, 18, 14, 9, 0, 0, 7); g.fill(); }
+  eyes(g, 0, -22, 42, 30, t, mood, 0.15);
+  if (mood === 'triste') { g.fillStyle = JADE; g.beginPath(); g.ellipse(-46, 2 + (t * 40 % 30), 4, 6, 0, 0, 7); g.fill(); }
+  g.restore();
+  if (mood === 'feliz') sparkles(g, t, 180, 40);
+}
+
+function sparkles(g, t, cx, cy) {
+  for (let i = 0; i < 8; i++) {
+    const a = i * 0.785 + t * 1.5, r = 150 + Math.sin(t * 4 + i) * 10;
+    const x = cx + Math.cos(a) * r, y = cy + 120 + Math.sin(a) * r * 0.75;
+    g.fillStyle = i % 2 ? GOLD : JADE; g.fillRect(x - 3, y - 3, 6, 6);
+  }
+}
+
+// ---------- montaje ----------
+const drawers = [pixelJaguar, glyphJaguar, cubJaguar];
+const moods = [['normal', 'Normal'], ['feliz', '¡Combo!'], ['triste', 'Fallo']];
+const state = [ 'normal', 'feliz', 'normal' ];
+document.querySelectorAll('.moods').forEach((box) => {
+  const i = Number(box.dataset.for);
+  for (const [id, label] of moods) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = `m${i}-${id}`; b.textContent = label;
+    b.setAttribute('aria-pressed', String(state[i] === id));
+    b.addEventListener('click', () => {
+      state[i] = id;
+      box.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+    box.appendChild(b);
+  }
+});
+const ctxs = [0, 1, 2].map((i) => document.getElementById('c' + i).getContext('2d'));
+function frame(now) {
+  const t = now / 1000;
+  ctxs.forEach((g, i) => { g.clearRect(0, 0, 360, 360); drawers[i](g, t, state[i]); });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
