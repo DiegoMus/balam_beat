@@ -13,6 +13,11 @@ export const CONFIG = {
   keys: ['KeyD', 'KeyF', 'KeyJ', 'KeyK'],     // teclado de respaldo
   midiNotes: [60, 61, 62, 63],                // notas que envía el ESP32-S3
   holdToActivate: 1.5,                        // segundos manteniendo carriles para accesos ocultos
+  serial: {
+    baudRate: 115200,     // debe coincidir con BAUD del firmware serial
+    autoConnect: true,    // reconecta solo al puerto autorizado la última vez
+    key: 'KeyS',          // tecla que abre el selector de puerto
+  },
 
   // Ventanas de acierto (segundos, ± respecto a la nota)
   windows: { perfect: 0.06, good: 0.11 },

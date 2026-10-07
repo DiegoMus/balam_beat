@@ -7,7 +7,9 @@ quetzal, monja blanca, ceibas, chipi-chipi y numeración maya.
 ```
 balam-beat/
 ├── firmware/balam_beat_controller/   Sketch para ESP32-S3 (o Leonardo/Micro): 4 láseres → USB MIDI
-├── web/                              El juego (HTML5 Canvas + Web Audio + Web MIDI, sin librerías)
+├── firmware/balam_beat_serial/       Sketch para cualquier ESP32/Arduino: 4 láseres → puerto serial
+├── docs/PROTOCOLO_SERIAL.md          Qué envía la ESP32 por serial y cómo lo lee el juego
+├── web/                              El juego (Canvas + Web Audio + Web MIDI + Web Serial, sin librerías)
 │   ├── js/config.js                  Ajustes del evento: ventanas de acierto, energía, colores, alias…
 │   └── songs/                        Tus canciones (audio + chart.json), ver songs/LEEME.md
 ├── tools/
@@ -19,10 +21,26 @@ balam-beat/
 
 ## 1. Probar sin hardware
 
-Abre `dist/balam-beat.html` en Chrome o Chromium. Juega con **D F J K**.
+Abre `dist/balam-beat.html` en Chrome o Chromium. Juega con **D F J K** o tocando la pantalla.
 Trae 3 canciones originales generadas por código (sin problemas de derechos).
 
-## 2. Controlador (ESP32-S3)
+En línea: **https://diegomus.github.io/balam_beat/** (se publica sola en cada push a `main`;
+para activarla la primera vez: *Settings → Pages → Source: GitHub Actions*).
+
+## 2. Controlador
+
+Hay dos firmwares; el juego acepta ambos a la vez.
+
+### Opción A — Serial (cualquier placa)
+
+1. Sube `firmware/balam_beat_serial`. En ESP32-S3 por USB nativo: **USB CDC On Boot → Enabled**.
+2. Abre el juego por `http://localhost` o por GitHub Pages (no con doble clic) en Chrome/Edge.
+3. Presiona **S**, elige el puerto de la placa y listo. Las siguientes veces se conecta solo.
+
+La placa envía una línea de texto por evento: `D1`…`D4` al entrar la mano al haz y
+`U1`…`U4` al salir. Detalles en `docs/PROTOCOLO_SERIAL.md`.
+
+### Opción B — USB MIDI (ESP32-S3)
 
 1. Arduino IDE con el core **esp32 3.x** de Espressif.
 2. Placa: *ESP32S3 Dev Module*. **Herramientas → USB Mode → USB-OTG (TinyUSB)**.
@@ -47,7 +65,9 @@ chromium-browser --kiosk --autoplay-policy=no-user-gesture-required http://local
 - `--autoplay-policy=no-user-gesture-required` es **importante**: sin él, el navegador
   no deja sonar el audio hasta que alguien toque el teclado o el mouse (un láser no cuenta).
 - Usa el servidor (no doble clic) para que carguen tus canciones de `web/songs/` y para que
-  Web MIDI funcione de forma confiable.
+  Web MIDI y Web Serial funcionen.
+- Con el controlador serial en la Raspberry: `sudo usermod -aG dialout $USER`, conecta un teclado
+  la primera vez para presionar **S** y elegir el puerto; después se reconecta solo.
 - Para usarlo sin internet, descarga la fuente *Press Start 2P* (Google Fonts, licencia OFL)
   como `web/fonts/PressStart2P-Regular.ttf`.
 - **P** pone pantalla completa si no usas modo kiosco.
