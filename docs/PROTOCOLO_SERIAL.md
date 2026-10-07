@@ -57,7 +57,7 @@ U3        ← sale del carril 3
    texto y los acumula; `parseSerialLines` (`web/js/serial-protocol.js`) separa las líneas completas y
    guarda el pedazo incompleto para la siguiente lectura.
 3. **Convertir en jugadas**: cada `D`/`U` se vuelve una pulsación o liberación del carril, igual que
-   una tecla D F J K o una nota MIDI. La marca de tiempo es el instante en que llegaron los bytes.
+   una tecla D F J K. La marca de tiempo es el instante en que llegaron los bytes.
 4. **Reconexión**: el navegador recuerda el puerto autorizado. Al recargar la página, o al
    desconectar y reconectar la ESP32, el juego vuelve a abrirlo solo, sin diálogo.
 
@@ -78,13 +78,6 @@ U3        ← sale del carril 3
 - Chips **FTDI** agrupan datos hasta 16 ms por defecto; si notas retraso, baja su *latency timer*
   o usa la calibración de latencia del juego (mantener carril 3).
 
-## ¿MIDI o serial?
+## Versión MIDI
 
-Ambas versiones conviven: el juego acepta las dos a la vez.
-
-| | USB MIDI (`firmware/balam_beat_controller`) | Serial (`firmware/balam_beat_serial`) |
-|---|---|---|
-| Placas | ESP32-S3, Leonardo/Micro | Cualquiera (ESP32, S3, C3, Uno, Nano…) |
-| Conexión en el juego | Automática | Tecla **S** la primera vez, luego automática |
-| Depuración | Herramientas MIDI | Monitor Serie del IDE (texto legible) |
-| Navegadores | Chrome, Edge, Firefox | Chrome, Edge |
+La versión con controlador USB MIDI (ESP32-S3, sin elegir puerto) está en la rama `main`.

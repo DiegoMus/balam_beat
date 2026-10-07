@@ -6,10 +6,9 @@ quetzal, monja blanca, ceibas, chipi-chipi y numeración maya.
 
 ```
 balam-beat/
-├── firmware/balam_beat_controller/   Sketch para ESP32-S3 (o Leonardo/Micro): 4 láseres → USB MIDI
 ├── firmware/balam_beat_serial/       Sketch para cualquier ESP32/Arduino: 4 láseres → puerto serial
 ├── docs/PROTOCOLO_SERIAL.md          Qué envía la ESP32 por serial y cómo lo lee el juego
-├── web/                              El juego (Canvas + Web Audio + Web MIDI + Web Serial, sin librerías)
+├── web/                              El juego (Canvas + Web Audio + Web Serial, sin librerías)
 │   ├── js/config.js                  Ajustes del evento: ventanas de acierto, energía, colores, alias…
 │   └── songs/                        Tus canciones (audio + chart.json), ver songs/LEEME.md
 ├── tools/
@@ -24,34 +23,20 @@ balam-beat/
 Abre `dist/balam-beat.html` en Chrome o Chromium. Juega con **D F J K** o tocando la pantalla.
 Trae 3 canciones originales generadas por código (sin problemas de derechos).
 
-En línea: **https://diegomus.github.io/balam_beat/** (se publica sola en cada push a `main`;
-para activarla la primera vez: *Settings → Pages → Source: GitHub Actions*).
+> Ramas: **`serial`** = controlador por puerto serial (esta versión) ·
+> **`main`** = controlador USB MIDI, publicada en GitHub Pages.
 
-## 2. Controlador
+## 2. Controlador serial (cualquier placa)
 
-Hay dos firmwares; el juego acepta ambos a la vez.
-
-### Opción A — Serial (cualquier placa)
-
-1. Sube `firmware/balam_beat_serial`. En ESP32-S3 por USB nativo: **USB CDC On Boot → Enabled**.
-2. Abre el juego por `http://localhost` o por GitHub Pages (no con doble clic) en Chrome/Edge.
+1. Sube `firmware/balam_beat_serial` (ESP32 clásico, ESP32-S3, C3, Arduino Uno/Nano…).
+   En ESP32-S3 por USB nativo: **Herramientas → USB CDC On Boot → Enabled**.
+2. Abre el juego por `http://localhost` en Chrome/Edge (no con doble clic).
 3. Presiona **S**, elige el puerto de la placa y listo. Las siguientes veces se conecta solo.
 
 La placa envía una línea de texto por evento: `D1`…`D4` al entrar la mano al haz y
-`U1`…`U4` al salir. Detalles en `docs/PROTOCOLO_SERIAL.md`.
+`U1`…`U4` al salir, a 115200 baudios. Detalles en `docs/PROTOCOLO_SERIAL.md`.
 
-### Opción B — USB MIDI (ESP32-S3)
-
-1. Arduino IDE con el core **esp32 3.x** de Espressif.
-2. Placa: *ESP32S3 Dev Module*. **Herramientas → USB Mode → USB-OTG (TinyUSB)**.
-3. Ajusta en el sketch `SENSOR_PINS` y, si los carriles funcionan al revés, `BEAM_BROKEN_LEVEL`.
-4. Sube el sketch y conecta la placa por el puerto USB nativo (no el de UART).
-   Aparecerá como instrumento MIDI "Balam Beat".
-
-Cada carril envía las notas MIDI 60, 61, 62 y 63. El primer cambio de cada haz se manda al
-instante y luego se ignoran rebotes por 12 ms, así que no se añade latencia.
-
-> Con Arduino Leonardo/Micro funciona igual: instala la librería **MIDIUSB**.
+> ¿Prefieres USB MIDI? Está en la rama **`main`**.
 
 ## 3. Montaje en la Raspberry Pi (o laptop)
 
@@ -65,7 +50,7 @@ chromium-browser --kiosk --autoplay-policy=no-user-gesture-required http://local
 - `--autoplay-policy=no-user-gesture-required` es **importante**: sin él, el navegador
   no deja sonar el audio hasta que alguien toque el teclado o el mouse (un láser no cuenta).
 - Usa el servidor (no doble clic) para que carguen tus canciones de `web/songs/` y para que
-  Web MIDI y Web Serial funcionen.
+  Web Serial funcione.
 - Con el controlador serial en la Raspberry: `sudo usermod -aG dialout $USER`, conecta un teclado
   la primera vez para presionar **S** y elegir el puerto; después se reconecta solo.
 - Para usarlo sin internet, descarga la fuente *Press Start 2P* (Google Fonts, licencia OFL)

@@ -85,7 +85,7 @@ export class AttractScene {
     }
 
     text(g, game.input.controllerLabel, 24, H - 20, { size: 10, color: PALETTE.lilac, align: 'left' });
-    if (!game.input.serialPort && game.input.serialStatus !== 'sin-soporte' && !game.input.midiDevices.length) {
+    if (!game.input.serialPort && game.input.serialStatus !== 'sin-soporte') {
       text(g, 'S: conectar controlador serial', W - 24, H - 20, { size: 10, color: PALETTE.lilac, align: 'right' });
     }
     if (!game.audio.unlocked) {
@@ -461,7 +461,7 @@ export class CalibrationScene {
     game.drawPanel(g, 120, 40, W - 240, 600, PALETTE.lilac);
     text(g, 'CALIBRACIÓN', W / 2, 90, { size: 24, color: PALETTE.lilac, glow: PALETTE.lilac });
     text(g, game.input.controllerLabel, W / 2, 130, { size: 11, color: PALETTE.orchid });
-    text(g, `Web MIDI: ${game.input.midiStatus}  ·  Serial: ${game.input.serialStatus}  (S: elegir puerto)`, W / 2, 152, {
+    text(g, `Serial: ${game.input.serialStatus}  (S: elegir puerto)`, W / 2, 152, {
       size: 9, color: PALETTE.lilac,
     });
 
