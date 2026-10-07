@@ -445,5 +445,6 @@ export class PlayScene {
     text(g, 'ENERGÍA', bx + 11, by + bh + 20, { size: 9, color: col });
 
     text(g, this.game.player.alias, 30, 30, { size: 12, color: PALETTE.orchid, align: 'left' });
+    this.game.drawLogos(g, W - 24, CONFIG.height - 58, 40, 0.45, 'right');
   }
 }

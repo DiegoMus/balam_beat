@@ -27,133 +27,262 @@ function offscreen(w, h) {
 }
 
 // ------------------------------------------------------------------
-// Fondo: cielo, sol neón partido, montañas, ceibas y cuadrícula
+// Fondo: bosque húmedo verapacense de noche. Luna entre la neblina,
+// montañas, ceibas, lianas, helechos, heliconias, luciérnagas y
+// chipi-chipi. Lo estático se pinta una vez; lo animado, cada cuadro.
 // ------------------------------------------------------------------
+function seeded(seed) {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const FOREST = {
+  sky0: '#020D0A', sky1: '#07231C', sky2: '#12392F',
+  far: '#14382F', mid: '#0B241E', near: '#061612', ink: '#030C09',
+  moss: '#0E2A1F', mist: '200,255,235', moon: '#DFFFF4',
+};
+
 export class Background {
   constructor() {
     this.static = this._renderStatic();
-    this.drops = Array.from({ length: 90 }, () => ({
-      x: Math.random() * W, y: Math.random() * H, v: 260 + Math.random() * 220,
+    this.front = this._renderFront();
+    this.mist = [0, 1, 2].map((i) => this._renderMist(i));
+    const rnd = seeded(9);
+    this.drops = Array.from({ length: 140 }, () => ({
+      x: rnd() * W, y: rnd() * H, v: 320 + rnd() * 260, l: 6 + rnd() * 8,
     }));
-    this.gridOffset = 0;
+    this.flies = Array.from({ length: 46 }, () => ({
+      x: rnd() * W, y: 120 + rnd() * (H - 160), ph: rnd() * 6.28, sp: 0.4 + rnd() * 0.8,
+      col: rnd() < 0.7 ? '#D7FF6B' : PALETTE.jade,
+    }));
+    this.t = 0;
+    this.flow = 0;
   }
 
   _renderStatic() {
     const c = offscreen(W, H);
     const g = c.getContext('2d');
+    const rnd = seeded(2026);
 
-    const sky = g.createLinearGradient(0, 0, 0, HORIZON);
-    sky.addColorStop(0, '#0B0620');
-    sky.addColorStop(0.6, PALETTE.night2);
-    sky.addColorStop(1, '#5A1A5E');
+    // cielo nocturno verde-azulado
+    const sky = g.createLinearGradient(0, 0, 0, HORIZON + 40);
+    sky.addColorStop(0, FOREST.sky0);
+    sky.addColorStop(0.6, FOREST.sky1);
+    sky.addColorStop(1, FOREST.sky2);
     g.fillStyle = sky;
-    g.fillRect(0, 0, W, HORIZON);
+    g.fillRect(0, 0, W, H);
 
-    // estrellas
-    for (let i = 0; i < 90; i++) {
-      g.fillStyle = `rgba(255,255,255,${0.2 + Math.random() * 0.6})`;
-      const s = Math.random() < 0.15 ? 3 : 2;
-      g.fillRect(Math.floor(Math.random() * W), Math.floor(Math.random() * (HORIZON - 80)), s, s);
-    }
-
-    // sol neón partido en franjas (en su propio lienzo para recortar las franjas)
-    const r = 140;
-    const sunC = offscreen(r * 2, r * 2);
-    const s = sunC.getContext('2d');
-    const sun = s.createLinearGradient(0, 0, 0, r * 2);
-    sun.addColorStop(0, PALETTE.gold);
-    sun.addColorStop(0.5, '#FF7A59');
-    sun.addColorStop(1, PALETTE.magenta);
-    s.fillStyle = sun;
-    s.beginPath();
-    s.arc(r, r, r, 0, Math.PI * 2);
-    s.fill();
-    s.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 8; i++) {
-      s.fillRect(0, r * 0.9 + i * 22, r * 2, 3 + i * 1.6);
-    }
-    const halo = g.createRadialGradient(W / 2, HORIZON - 90, r * 0.8, W / 2, HORIZON - 90, r * 2);
-    halo.addColorStop(0, 'rgba(255,61,154,0.35)');
-    halo.addColorStop(1, 'rgba(255,61,154,0)');
+    // luna con halo, velada por la neblina
+    const mx = W * 0.76, my = 150;
+    const halo = g.createRadialGradient(mx, my, 20, mx, my, 260);
+    halo.addColorStop(0, 'rgba(223,255,244,0.35)');
+    halo.addColorStop(1, 'rgba(223,255,244,0)');
     g.fillStyle = halo;
-    g.fillRect(0, 0, W, HORIZON);
-    g.drawImage(sunC, W / 2 - r, HORIZON - 90 - r);
+    g.fillRect(0, 0, W, HORIZON + 40);
+    g.fillStyle = FOREST.moon;
+    g.globalAlpha = 0.9;
+    g.beginPath();
+    g.arc(mx, my, 46, 0, Math.PI * 2);
+    g.fill();
+    g.globalAlpha = 1;
 
-    // montañas verapacenses en capas
-    const layers = [
-      { base: HORIZON - 25, amp: 50, color: '#3A1550', seed: 1 },
-      { base: HORIZON - 10, amp: 40, color: '#251040', seed: 2 },
-      { base: HORIZON, amp: 26, color: '#160A2C', seed: 3 },
-    ];
-    for (const L of layers) {
-      g.fillStyle = L.color;
+    // pocas estrellas entre nubes
+    for (let i = 0; i < 40; i++) {
+      g.fillStyle = `rgba(220,255,240,${0.15 + rnd() * 0.4})`;
+      g.fillRect(Math.floor(rnd() * W), Math.floor(rnd() * 150), 2, 2);
+    }
+
+    // montañas de la Verapaz en capas de neblina
+    const ridge = (base, amp, color, seed, step = 6) => {
+      g.fillStyle = color;
       g.beginPath();
-      g.moveTo(0, HORIZON);
-      for (let x = 0; x <= W; x += 8) {
-        const y = L.base - Math.abs(Math.sin(x * 0.006 * L.seed + L.seed) * L.amp)
-          - Math.sin(x * 0.021 + L.seed * 3) * 10;
+      g.moveTo(0, H);
+      for (let x = 0; x <= W; x += step) {
+        const y = base - Math.abs(Math.sin(x * 0.0045 * seed + seed)) * amp
+          - Math.sin(x * 0.019 + seed * 2) * amp * 0.18;
         g.lineTo(x, y);
       }
-      g.lineTo(W, HORIZON);
+      g.lineTo(W, H);
       g.closePath();
+      g.fill();
+    };
+    ridge(HORIZON - 30, 90, '#1A453A', 1.3);
+    fogBand(g, HORIZON - 70, 70, 0.18);
+    ridge(HORIZON - 10, 60, '#123329', 2.1);
+    fogBand(g, HORIZON - 40, 60, 0.2);
+
+    // línea de selva lejana: copas redondeadas
+    canopyLine(g, rnd, HORIZON + 6, 26, FOREST.far, 18);
+    fogBand(g, HORIZON - 20, 50, 0.22);
+    canopyLine(g, rnd, HORIZON + 22, 34, FOREST.mid, 24);
+
+    // suelo húmedo con musgo y reflejo de la luna
+    const floor = g.createLinearGradient(0, HORIZON + 20, 0, H);
+    floor.addColorStop(0, '#0A221B');
+    floor.addColorStop(1, '#020806');
+    g.fillStyle = floor;
+    g.fillRect(0, HORIZON + 20, W, H - HORIZON - 20);
+    const shine = g.createRadialGradient(W / 2, HORIZON + 60, 10, W / 2, HORIZON + 60, 420);
+    shine.addColorStop(0, 'rgba(160,255,220,0.12)');
+    shine.addColorStop(1, 'rgba(160,255,220,0)');
+    g.fillStyle = shine;
+    g.fillRect(0, HORIZON + 20, W, H);
+
+    // ceibas a los lados (árbol sagrado del bosque)
+    drawCeiba(g, 150, HORIZON + 40, 1.15);
+    drawCeiba(g, W - 160, HORIZON + 40, 1.3);
+    return c;
+  }
+
+  // Primer plano: lianas desde arriba, helechos y heliconias en las esquinas
+  _renderFront() {
+    const c = offscreen(W, H);
+    const g = c.getContext('2d');
+    const rnd = seeded(77);
+
+    // copas que enmarcan la parte superior
+    g.fillStyle = FOREST.ink;
+    for (let x = -40; x < W + 40; x += 34) {
+      const edge = x < 260 || x > W - 260 ? 1 : 0.35;
+      const r = (26 + rnd() * 30) * edge + 10;
+      g.beginPath();
+      g.arc(x, -8 + rnd() * 18 * edge, r, 0, Math.PI * 2);
       g.fill();
     }
 
-    // neblina
-    const fog = g.createLinearGradient(0, HORIZON - 60, 0, HORIZON);
-    fog.addColorStop(0, 'rgba(185,140,255,0)');
-    fog.addColorStop(1, 'rgba(185,140,255,0.22)');
-    g.fillStyle = fog;
-    g.fillRect(0, HORIZON - 60, W, 60);
+    // lianas con hojas
+    for (const [x, len, sway] of [[70, 300, 20], [210, 190, -14], [330, 120, 10], [W - 80, 330, -22], [W - 230, 210, 16], [W - 360, 110, -8]]) {
+      drawVine(g, rnd, x, len, sway);
+    }
 
-    // ceibas a los lados
-    drawCeiba(g, 120, HORIZON + 4, 1.0);
-    drawCeiba(g, W - 140, HORIZON + 4, 1.15);
+    // helechos y hojas grandes en las esquinas inferiores
+    drawFern(g, rnd, 20, H + 10, -1.05, 260);
+    drawFern(g, rnd, 110, H + 20, -0.55, 200);
+    drawFern(g, rnd, W - 20, H + 10, -2.1, 260);
+    drawFern(g, rnd, W - 120, H + 20, -2.55, 210);
+    drawLeaf(g, -30, H - 60, -0.3, 230, 70);
+    drawLeaf(g, W + 30, H - 70, Math.PI + 0.35, 240, 74);
+    drawHeliconia(g, 205, H - 30, 0.9);
+    drawHeliconia(g, W - 210, H - 20, 1.05);
+    return c;
+  }
 
-    // suelo
-    const floor = g.createLinearGradient(0, HORIZON, 0, H);
-    floor.addColorStop(0, '#1A0B33');
-    floor.addColorStop(1, '#090414');
-    g.fillStyle = floor;
-    g.fillRect(0, HORIZON, W, H - HORIZON);
-
+  _renderMist(i) {
+    const c = offscreen(W, 140);
+    const g = c.getContext('2d');
+    const rnd = seeded(300 + i);
+    for (let k = 0; k < 18; k++) {
+      const x = rnd() * W, y = 40 + rnd() * 60, rx = 120 + rnd() * 200, ry = 18 + rnd() * 22;
+      const grad = g.createRadialGradient(x, y, 0, x, y, rx);
+      grad.addColorStop(0, `rgba(${FOREST.mist},${0.07 + i * 0.02})`);
+      grad.addColorStop(1, `rgba(${FOREST.mist},0)`);
+      g.fillStyle = grad;
+      g.save();
+      g.translate(x, y);
+      g.scale(1, ry / rx);
+      g.translate(-x, -y);
+      g.beginPath();
+      g.arc(x, y, rx, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+    }
     return c;
   }
 
   update(dt, speed = 1) {
-    this.gridOffset = (this.gridOffset + dt * 0.6 * speed) % 1;
+    this.t += dt;
+    this.flow = (this.flow + dt * 0.5 * speed) % 1;
     for (const d of this.drops) {
       d.y += d.v * dt;
-      d.x -= d.v * dt * 0.15;
-      if (d.y > H) { d.y = -10; d.x = Math.random() * (W + 100); }
+      d.x -= d.v * dt * 0.12;
+      if (d.y > H) { d.y = -12; d.x = Math.random() * (W + 120); }
+    }
+    for (const f of this.flies) {
+      f.ph += dt * f.sp;
+      f.x += Math.cos(f.ph * 0.7) * 14 * dt;
+      f.y += Math.sin(f.ph) * 10 * dt;
     }
   }
 
   draw(g, pulse = 0) {
     g.drawImage(this.static, 0, 0);
 
-    // cuadrícula en perspectiva
-    g.save();
-    g.strokeStyle = `rgba(255,61,154,${0.35 + pulse * 0.4})`;
-    g.lineWidth = 2;
-    const vx = W / 2;
-    g.beginPath();
-    for (let i = -14; i <= 14; i++) {
-      g.moveTo(vx + i * 12, HORIZON);
-      g.lineTo(vx + i * 160, H);
+    // neblina que se desplaza entre las capas
+    const offs = [this.t * 8, -this.t * 5, this.t * 12];
+    const ys = [HORIZON - 120, HORIZON - 50, HORIZON + 10];
+    for (let i = 0; i < 3; i++) {
+      const x = ((offs[i] % W) + W) % W;
+      g.drawImage(this.mist[i], x - W, ys[i]);
+      g.drawImage(this.mist[i], x, ys[i]);
     }
-    for (let i = 0; i < 12; i++) {
-      const z = (i + this.gridOffset) / 12;
-      const y = HORIZON + (H - HORIZON) * z * z;
-      g.moveTo(0, y);
-      g.lineTo(W, y);
+
+    // vetas de agua/neblina en el suelo que avanzan con el ritmo
+    g.save();
+    g.strokeStyle = `rgba(120,255,210,${0.05 + pulse * 0.18})`;
+    g.lineWidth = 2;
+    g.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const z = (i + this.flow) / 10;
+      const y = HORIZON + 24 + (H - HORIZON - 24) * z * z;
+      const half = 120 + z * 620;
+      g.moveTo(W / 2 - half, y);
+      g.lineTo(W / 2 + half, y);
     }
     g.stroke();
     g.restore();
 
-    // chipi-chipi (llovizna de píxeles)
-    g.fillStyle = 'rgba(160,220,255,0.35)';
-    for (const d of this.drops) g.fillRect(d.x, d.y, 2, 8);
+    // luciérnagas
+    for (const f of this.flies) {
+      const a = (0.35 + 0.65 * Math.max(0, Math.sin(f.ph * 2.3))) * (0.7 + pulse * 0.6);
+      drawGlow(g, f.col, f.x, f.y, 10, a * 0.7);
+      g.fillStyle = f.col;
+      g.globalAlpha = Math.min(1, a);
+      g.fillRect(f.x - 1, f.y - 1, 3, 3);
+      g.globalAlpha = 1;
+    }
+
+    // chipi-chipi
+    g.strokeStyle = 'rgba(190,240,225,0.28)';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    for (const d of this.drops) {
+      g.moveTo(d.x, d.y);
+      g.lineTo(d.x - d.l * 0.12, d.y + d.l);
+    }
+    g.stroke();
+
+    g.drawImage(this.front, 0, 0);
+  }
+}
+
+function fogBand(g, y, h, a) {
+  const grad = g.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, `rgba(${FOREST.mist},0)`);
+  grad.addColorStop(0.6, `rgba(${FOREST.mist},${a})`);
+  grad.addColorStop(1, `rgba(${FOREST.mist},0)`);
+  g.fillStyle = grad;
+  g.fillRect(0, y, W, h);
+}
+
+function canopyLine(g, rnd, base, r, color, step) {
+  g.fillStyle = color;
+  g.fillRect(0, base, W, H - base);
+  for (let x = -r; x < W + r; x += step) {
+    const rr = r * (0.6 + rnd() * 0.7);
+    g.beginPath();
+    g.arc(x, base - rnd() * r * 0.6, rr, 0, Math.PI * 2);
+    g.fill();
+    if (rnd() < 0.18) { // árbol emergente
+      g.fillRect(x - 3, base - r * 2.2, 6, r * 2.2);
+      g.beginPath();
+      g.ellipse(x, base - r * 2.3, r * 1.4, r * 0.6, 0, 0, Math.PI * 2);
+      g.fill();
+    }
   }
 }
 
@@ -161,28 +290,136 @@ function drawCeiba(g, x, y, s) {
   g.save();
   g.translate(x, y);
   g.scale(s, s);
-  g.fillStyle = '#0C0518';
-  g.fillRect(-8, -150, 16, 150);
-  g.beginPath();
-  g.moveTo(-8, -40); g.lineTo(-34, 0); g.lineTo(-6, 0); g.fill();
-  g.beginPath();
-  g.moveTo(8, -40); g.lineTo(34, 0); g.lineTo(6, 0); g.fill();
-  // ramas abiertas y copa en capas de follaje
-  g.lineWidth = 7;
-  g.strokeStyle = '#0C0518';
+  g.fillStyle = FOREST.near;
+  g.strokeStyle = FOREST.near;
+  // tronco con raíces tabulares
+  g.fillRect(-9, -190, 18, 190);
   for (const sx of [-1, 1]) {
     g.beginPath();
-    g.moveTo(0, -120); g.quadraticCurveTo(sx * 40, -150, sx * 90, -160);
-    g.moveTo(0, -140); g.quadraticCurveTo(sx * 25, -175, sx * 55, -185);
+    g.moveTo(sx * 6, -60); g.quadraticCurveTo(sx * 18, -14, sx * 46, 0); g.lineTo(sx * 4, 0); g.fill();
+  }
+  // ramas horizontales y copa en paraguas
+  g.lineWidth = 7;
+  for (const sx of [-1, 1]) {
+    g.beginPath();
+    g.moveTo(0, -160); g.quadraticCurveTo(sx * 50, -190, sx * 110, -196);
+    g.moveTo(0, -180); g.quadraticCurveTo(sx * 30, -215, sx * 70, -222);
     g.stroke();
   }
-  for (const [w, yy, r] of [[230, -162, 16], [170, -186, 14], [100, -204, 12]]) {
-    for (let x = -w / 2; x <= w / 2; x += r * 1.2) {
-      const bump = Math.sin(x * 0.3 + yy) * 4;
+  for (const [w, yy, r] of [[260, -200, 18], [190, -226, 16], [110, -246, 13]]) {
+    for (let px = -w / 2; px <= w / 2; px += r * 1.15) {
       g.beginPath();
-      g.arc(x, yy + bump, r, 0, Math.PI * 2);
+      g.arc(px, yy + Math.sin(px * 0.3 + yy) * 5, r, 0, Math.PI * 2);
       g.fill();
     }
+  }
+  // epífitas (bromelias) en las ramas, con un toque de color
+  g.fillStyle = 'rgba(255,61,154,0.55)';
+  for (const px of [-80, 60]) {
+    g.beginPath();
+    g.ellipse(px, -200, 6, 3, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.restore();
+}
+
+function drawVine(g, rnd, x, len, sway) {
+  g.strokeStyle = FOREST.ink;
+  g.fillStyle = FOREST.ink;
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(x, 0);
+  g.quadraticCurveTo(x + sway, len * 0.6, x + sway * 0.4, len);
+  g.stroke();
+  for (let t = 0.12; t < 1; t += 0.09) {
+    const px = x + sway * 2 * t * (1 - t) * 0.6 + sway * 0.4 * t * t, py = len * t;
+    const side = rnd() < 0.5 ? -1 : 1;
+    g.save();
+    g.translate(px, py);
+    g.rotate(side * (0.6 + rnd() * 0.5));
+    g.beginPath();
+    g.ellipse(side * 9, 0, 10, 4.5, 0, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  }
+}
+
+function drawFern(g, rnd, x, y, angle, len) {
+  g.save();
+  g.translate(x, y);
+  g.rotate(angle);
+  g.fillStyle = FOREST.ink;
+  g.strokeStyle = FOREST.ink;
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.quadraticCurveTo(len * 0.5, -len * 0.08, len, len * 0.12);
+  g.stroke();
+  for (let t = 0.08; t < 0.98; t += 0.05) {
+    const px = len * t, py = -len * 0.16 * t * (1 - t) + len * 0.12 * t * t;
+    const size = (1 - t) * 26 + 6;
+    for (const side of [-1, 1]) {
+      g.save();
+      g.translate(px, py);
+      g.rotate(side * 1.1 + 0.2);
+      g.beginPath();
+      g.ellipse(size * 0.55, 0, size * 0.6, size * 0.18, 0, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+    }
+  }
+  g.restore();
+}
+
+function drawLeaf(g, x, y, angle, len, wid) {
+  g.save();
+  g.translate(x, y);
+  g.rotate(angle);
+  g.fillStyle = FOREST.ink;
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.quadraticCurveTo(len * 0.45, -wid, len, 0);
+  g.quadraticCurveTo(len * 0.45, wid, 0, 0);
+  g.fill();
+  // nervaduras con un brillo húmedo
+  g.strokeStyle = 'rgba(63,224,208,0.12)';
+  g.lineWidth = 1.5;
+  g.beginPath();
+  g.moveTo(4, 0); g.lineTo(len * 0.95, 0);
+  for (let t = 0.15; t < 0.9; t += 0.12) {
+    g.moveTo(len * t, 0); g.lineTo(len * (t + 0.1), -wid * 0.55 * Math.sin(Math.PI * t));
+    g.moveTo(len * t, 0); g.lineTo(len * (t + 0.1), wid * 0.55 * Math.sin(Math.PI * t));
+  }
+  g.stroke();
+  g.restore();
+}
+
+// Heliconia: flor de brácteas rojas y amarillas del bosque húmedo
+function drawHeliconia(g, x, y, s) {
+  g.save();
+  g.translate(x, y);
+  g.scale(s, s);
+  g.strokeStyle = FOREST.ink;
+  g.lineWidth = 4;
+  g.beginPath();
+  g.moveTo(0, 30); g.lineTo(0, -150);
+  g.stroke();
+  for (let i = 0; i < 6; i++) {
+    const side = i % 2 ? 1 : -1;
+    const yy = -40 - i * 20;
+    g.save();
+    g.translate(0, yy);
+    g.rotate(side * 0.5);
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.lineTo(side * 34, -6);
+    g.lineTo(side * 4, -16);
+    g.closePath();
+    g.fillStyle = 'rgba(255,46,77,0.75)';
+    g.fill();
+    g.fillStyle = 'rgba(255,201,60,0.8)';
+    g.fillRect(side > 0 ? 26 : -32, -8, 6, 3);
+    g.restore();
   }
   g.restore();
 }

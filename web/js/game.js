@@ -2,6 +2,7 @@
 
 import { CONFIG } from './config.js';
 import { Background, PALETTE, text, roundRect, hexA, HORIZON } from './art.js';
+import { LOGO_UMG, LOGO_SISTEMAS, LOGO_SISTEMAS_RATIO } from './logos.js';
 
 export const LANE_SPACING = 170;
 export const HIT_Y = 610;
@@ -38,6 +39,9 @@ export class Game {
     this.time = 0;
     this.last = performance.now();
     this.shake = 0;
+    this.logos = { umg: new Image(), sis: new Image() };
+    this.logos.umg.src = LOGO_UMG;
+    this.logos.sis.src = LOGO_SISTEMAS;
 
     input.on('press', (lane, t) => this.scene?.onPress?.(lane, t));
     input.on('release', (lane, t) => this.scene?.onRelease?.(lane, t));
@@ -158,6 +162,19 @@ export class Game {
         g.fillRect(cx + sx * (10 + k * 8) - (sx < 0 ? 6 : 0), cy + sy * (10 + (2 - k) * 6) - (sy < 0 ? 4 : 0), 6, 4);
       }
     }
+  }
+
+  // Logos institucionales minimalistas: sello UMG + Ingeniería en Sistemas UMG Cobán
+  drawLogos(g, x, y, size, alpha = 0.85, align = 'left') {
+    const { umg, sis } = this.logos;
+    const sisH = size * 0.42, sisW = sisH * LOGO_SISTEMAS_RATIO, gap = size * 0.25;
+    const total = size + gap + sisW;
+    const x0 = align === 'right' ? x - total : align === 'center' ? x - total / 2 : x;
+    g.save();
+    g.globalAlpha = alpha;
+    if (umg.complete && umg.naturalWidth) g.drawImage(umg, x0, y, size, size);
+    if (sis.complete && sis.naturalWidth) g.drawImage(sis, x0 + size + gap, y + (size - sisH) / 2, sisW, sisH);
+    g.restore();
   }
 
   idleFor() {

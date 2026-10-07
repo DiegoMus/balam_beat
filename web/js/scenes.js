@@ -59,6 +59,7 @@ export class AttractScene {
     const t = game.time;
     game.bg.draw(g, (Math.sin(t * 3) + 1) * 0.15);
     drawJaguarEyes(g, W / 2, 110, t, 0.8);
+    game.drawLogos(g, 24, 20, 64, 0.9);
     title(g, t, 300, 72);
 
     const blink = (Math.sin(t * 4) + 1) / 2;
@@ -169,6 +170,7 @@ export class SelectScene {
     const { songIndex, diff } = game.selection;
     const song = game.songs[songIndex];
     game.bg.draw(g);
+    game.drawLogos(g, 24, 16, 46, 0.75);
     text(g, `JUGADOR: ${game.player.alias.toUpperCase()}`, W / 2, 40, { size: 12, color: PALETTE.lilac });
     text(g, 'ELIGE UNA CANCIÓN', W / 2, 80, { size: 22, color: PALETTE.orchid, glow: PALETTE.magenta });
 
@@ -283,6 +285,7 @@ export class ResultsScene {
     game.bg.draw(g);
     game.drawPanel(g, 160, 60, W - 320, 560, failed ? PALETTE.magenta : PALETTE.jade);
 
+    game.drawLogos(g, 190, 80, 44, 0.7);
     text(g, failed ? '¡CASI LO LOGRAS!' : '¡CANCIÓN COMPLETA!', W / 2, 110, {
       size: 24, color: failed ? PALETTE.magenta : PALETTE.jade, glow: failed ? PALETTE.magenta : PALETTE.jade,
     });
@@ -358,6 +361,7 @@ export class HighscoresScene {
       text(g, e.grade || '', 840, y, { size: 14, color: PALETTE.lilac });
       text(g, String(e.score), W - 320, y, { size: 14, color: col, align: 'right' });
     });
+    game.drawLogos(g, 24, H - 70, 48, 0.75);
     game.drawLaneHints(g, [null, null, null, '✔ SIGUIENTE']);
   }
 }
