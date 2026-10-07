@@ -40,6 +40,9 @@ export class PlayScene {
     this.quetzal = null;
     this.beatPulse = 0;
 
+    this.game.mascot.setBase('normal');
+    this.game.mascot.moodTime = 0;
+    this.game.mascot.mood = 'normal';
     this.game.audio.play(buffer, CONFIG.countdown);
   }
 
@@ -104,6 +107,7 @@ export class PlayScene {
     this.game.audio.hit(note.lane, kind === 'perfect');
     this._popup(note.lane, kind);
     this._burst(note.lane, kind === 'perfect' ? 18 : 10);
+    if (this.combo % CONFIG.comboStep === 0) this.game.mascot.react('feliz', 1.4);
 
     if (this.combo % CONFIG.quetzalEvery === 0) {
       this.quetzal = { x: CONFIG.width + 40, y: 90 + Math.random() * 80, t: 0 };
@@ -118,10 +122,12 @@ export class PlayScene {
     this.combo = 0;
     this.energy += CONFIG.energy.miss;
     this.game.audio.miss();
+    this.game.mascot.react('triste', 1.0);
     this._popup(note.lane, 'miss');
     if (CONFIG.allowFail && this.energy <= 0) {
       this.energy = 0;
       this.failed = true;
+      this.game.mascot.setBase('triste');
       this._finish();
     }
   }
@@ -237,6 +243,11 @@ export class PlayScene {
         size: 14, color: PALETTE.jade, glow: PALETTE.jade,
       });
     }
+
+    // Balam Cachorro baila al pulso de la canción, a la derecha de los carriles
+    const bpm = this.song.bpm || 120;
+    const beat = t > 0 ? Math.cos(((t * bpm) / 60) * Math.PI * 2) : Math.sin(game.time * 4);
+    game.mascot.draw(g, 1140, 420, 0.55, game.time, beat);
 
     this._drawHud(g, t);
 

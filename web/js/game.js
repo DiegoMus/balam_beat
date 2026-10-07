@@ -3,6 +3,7 @@
 import { CONFIG } from './config.js';
 import { Background, PALETTE, text, roundRect, hexA, HORIZON } from './art.js';
 import { LOGO_UMG, LOGO_SISTEMAS, LOGO_SISTEMAS_RATIO } from './logos.js';
+import { Mascot } from './mascot.js';
 
 export const LANE_SPACING = 170;
 export const HIT_Y = 610;
@@ -39,6 +40,7 @@ export class Game {
     this.time = 0;
     this.last = performance.now();
     this.shake = 0;
+    this.mascot = new Mascot();
     this.logos = { umg: new Image(), sis: new Image() };
     this.logos.umg.src = LOGO_UMG;
     this.logos.sis.src = LOGO_SISTEMAS;
@@ -115,6 +117,7 @@ export class Game {
       this.time += dt;
       this.sceneTime += dt;
       this.shake = Math.max(0, this.shake - dt * 30);
+      this.mascot.update(dt);
       this.scene?.update?.(dt);
 
       const g = this.g;

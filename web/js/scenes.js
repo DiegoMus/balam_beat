@@ -28,9 +28,10 @@ export class AttractScene {
     this.boardTimer = 0;
     // si se llega con una mano aún en el haz, se ignora ese gesto
     this._ignore = this.game.input.down.some(Boolean);
+    this.game.mascot.setBase('normal');
   }
 
-  onPress() {}
+  onPress() { this.game.mascot.react('feliz', 0.8); }
   onRelease() {
     // se avanza al SOLTAR para no confundir con el gesto de mantener
     if (this.game.input.down.some(Boolean)) return;
@@ -61,6 +62,7 @@ export class AttractScene {
     drawJaguarEyes(g, W / 2, 110, t, 0.8);
     game.drawLogos(g, 24, 20, 64, 0.9);
     title(g, t, 300, 72);
+    game.mascot.draw(g, 1060, 330, 0.7, t);
 
     const blink = (Math.sin(t * 4) + 1) / 2;
     text(g, 'PASA LA MANO POR UN LÁSER PARA JUGAR', W / 2, 470, {
@@ -268,6 +270,7 @@ export class ResultsScene {
       name: this.game.player.alias || 'Anónimo', score, grade: this.g.letter, acc: this.g.acc,
     });
     this.shown = 0;
+    this.game.mascot.setBase(failed ? 'triste' : 'feliz');
   }
   onPress(lane) { if (lane === 3 && this.game.sceneTime > 1) this._next(); }
   onKey(e) { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Escape') this._next(); return true; }
@@ -323,6 +326,7 @@ export class ResultsScene {
     } else if (this.rank > 0) {
       text(g, `Entraste al top 10 en el puesto ${this.rank + 1}`, W / 2, 520, { size: 13, color: PALETTE.jade });
     }
+    game.mascot.draw(g, 1010, 470, 0.45, game.time);
     text(g, `${QEQCHI.thanks} · ¡Gracias por jugar!`, W / 2, 580, { size: 12, color: PALETTE.orchid, alpha: 0.85 });
 
     game.drawLaneHints(g, [null, null, null, '✔ CONTINUAR']);
