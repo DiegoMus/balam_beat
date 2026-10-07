@@ -1,0 +1,16 @@
+{
+  "name": "balam-beat",
+  "version": "0.1.0",
+  "description": "Juego de ritmo con barreras láser y estética neón maya verapacense",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server web -p 8000 -c-1",
+    "build": "node tools/build-single.mjs",
+    "midi2chart": "node tools/midi2chart.mjs",
+    "test": "node tools/test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

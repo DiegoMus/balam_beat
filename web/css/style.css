@@ -1,0 +1,30 @@
+/* Para funcionar 100% sin internet, descarga PressStart2P-Regular.ttf
+   (Google Fonts, licencia OFL) en web/fonts/. Si no está, se usa la versión
+   en línea de Google Fonts y, sin internet, una fuente monoespaciada. */
+@font-face {
+  font-family: "BalamPixel";
+  src: url("../fonts/PressStart2P-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --night: #140A2B;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #05020C;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas {
+  display: block;
+  background: var(--night);
+}
