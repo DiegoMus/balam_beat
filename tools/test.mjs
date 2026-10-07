@@ -4,7 +4,6 @@
 import assert from 'node:assert/strict';
 import { BUILTIN_SONGS, composeSong, chartsFromNotes } from '../web/js/procedural.js';
 import { parseMidi, buildCharts } from './midi2chart.mjs';
-import { parseSerialLines } from '../web/js/serial-protocol.js';
 
 let ok = 0;
 const check = (name, fn) => { fn(); ok++; console.log('  ✔', name); };
@@ -66,20 +65,6 @@ check(`genera niveles ${charts.facil.length}/${charts.normal.length}/${charts.di
   assert.ok(last[2] > 0.9, 'la nota larga es sostenida');
   assert.equal(charts.dificil[0][1], 0);             // tono más grave -> carril 1
   assert.equal(last[1], 3);                          // tono más agudo -> carril 4
-});
-
-console.log('Protocolo serial');
-check('interpreta eventos, identificación y líneas partidas', () => {
-  let r = parseSerialLines('BALAM,1.0,4\r\nD1\nU1\n# comentario\nD');
-  assert.deepEqual(r.events, [
-    { type: 'hello', version: '1.0', lanes: 4 },
-    { type: 'press', lane: 0 },
-    { type: 'release', lane: 0 },
-  ]);
-  assert.equal(r.rest, 'D');
-  r = parseSerialLines(r.rest + '4\nbasura\nU4\n');
-  assert.deepEqual(r.events, [{ type: 'press', lane: 3 }, { type: 'release', lane: 3 }]);
-  assert.equal(r.rest, '');
 });
 
 console.log(`\n${ok} pruebas correctas`);

@@ -42,10 +42,6 @@ async function boot() {
 
   // P = pantalla completa ("proyector"); la F ya es un carril
   window.addEventListener('keydown', (e) => {
-    // S = elegir el puerto serial del controlador (fuera de partida)
-    if (e.code === CONFIG.serial.key && game.scene !== game.scenes.play) {
-      input.connectSerial();
-    }
     if (e.code === 'KeyP' && !document.fullscreenElement) {
       document.documentElement.requestFullscreen?.().catch(() => {});
     }
